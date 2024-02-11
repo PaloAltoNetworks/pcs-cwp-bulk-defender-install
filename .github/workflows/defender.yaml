@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 jobs:
-    defender:
+    download:
         environment: testing
         runs-on: ubuntu-latest
         steps: 
@@ -21,3 +21,4 @@ jobs:
               with:
                 name: daemonset
                 path: daemonset.yaml
+                retention-days: 1

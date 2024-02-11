@@ -16,5 +16,5 @@ jobs:
   deploy-azure:
     needs: defender 
     name: deploy-azure
-    uses: ./.github/workflows/deploy-azure.yaml
+    uses: ./.github/workflows/azure.yaml
     secrets: inherit
