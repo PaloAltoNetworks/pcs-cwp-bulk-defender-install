@@ -21,7 +21,6 @@ jobs:
                 path: defender
             - name: Install defender
               run: |
-                cat defender/daemonset.yaml
                 echo "Logging in into Azure"
                 az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_APP_KEY }} --tenant ${{ secrets.AZURE_TENANT_ID }} > /dev/null
 
