@@ -1,0 +1,167 @@
+{
+  "output": {
+    "f_consent_link": {
+      "value": "${var.azure_portal_link}?quickstart=true#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/CallAnAPI/appId/${azuread_application.prisma_cloud_app.application_id}/isMSAApp/"
+    },
+    "d_application_key_expiration": {
+      "value": "${azuread_application_password.password.end_date}"
+    },
+    "e_service_principal_object_id": {
+      "value": "${azuread_service_principal.prisma_cloud_sp.id}"
+    },
+    "a_active_directory_id": {
+      "value": "${var.tenant_id}"
+    },
+    "c_application_key": {
+      "value": "${nonsensitive(azuread_application_password.password.value)}"
+    },
+    "b_application_id": {
+      "value": "${azuread_application.prisma_cloud_app.application_id}"
+    }
+  },
+  "data": {
+    "azurerm_management_group": {
+      "tenant_root_group": {
+        "name": "${var.tenant_id}"
+      }
+    }
+  },
+  "provider": {
+    "random": {},
+    "azuread": {
+      "tenant_id": "${var.tenant_id}",
+      "environment": "${var.cloud_environment}"
+    },
+    "time": {},
+    "azurerm": {
+      "tenant_id": "${var.tenant_id}",
+      "features": {}
+    }
+  },
+  "resource": {
+    "azuread_application_password": {
+      "password": {
+        "depends_on": [
+          "null_resource.check_roles"
+        ],
+        "application_object_id": "${azuread_application.prisma_cloud_app.object_id}",
+        "end_date_relative": "${var.application_password_expiration}"
+      }
+    },
+    "random_string": {
+      "unique_id": {
+        "special": false,
+        "length": 5,
+        "min_lower": 5
+      }
+    },
+    "azuread_service_principal": {
+      "prisma_cloud_sp": {
+        "application_id": "${azuread_application.prisma_cloud_app.application_id}"
+      }
+    },
+    "null_resource": {
+      "check_roles": {
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "if [ \"$(az role assignment list --assignee $(az ad signed-in-user show --query userPrincipalName -o tsv) --scope /providers/Microsoft.Management/managementGroups/${var.tenant_id} --query \"[?roleDefinitionName=='User Access Administrator' || roleDefinitionName=='Management Group Contributor']\" -o tsv | wc -l)\" -eq 0 ]; then echo \"WARNING --- The user does not have  'User Access Administrator' or 'Management Group Contributor' roles at the tenant scope. Please provide equivalent permissions as in both the above roles to execute the terraform.\"; fi"
+            }
+          }
+        ]
+      }
+    },
+    "time_sleep": {
+      "wait_20_seconds": {
+        "depends_on": [
+          "azurerm_role_definition.custom_prisma_role"
+        ],
+        "create_duration": "20s"
+      }
+    },
+    "azuread_application": {
+      "prisma_cloud_app": {
+        "depends_on": [
+          "null_resource.check_roles"
+        ],
+        "web": {
+          "homepage_url": "https://www.paloaltonetworks.com/prisma/cloud"
+        },
+        "display_name": "Prisma Cloud App ${random_string.unique_id.result}"
+      }
+    },
+    "random_password": {
+      "application_password": {
+        "special": true,
+        "length": 32
+      }
+    },
+    "azurerm_role_assignment": {
+      "assign_custom_prisma_role": {
+        "role_definition_id": "${azurerm_role_definition.custom_prisma_role.role_definition_resource_id}",
+        "depends_on": [
+          "time_sleep.wait_20_seconds",
+          "null_resource.check_roles"
+        ],
+        "skip_service_principal_aad_check": true,
+        "scope": "${data.azurerm_management_group.tenant_root_group.id}",
+        "principal_id": "${azuread_service_principal.prisma_cloud_sp.id}"
+      }
+    },
+    "azurerm_role_definition": {
+      "custom_prisma_role": {
+        "assignable_scopes": [
+          "${data.azurerm_management_group.tenant_root_group.id}"
+        ],
+        "depends_on": [
+          "null_resource.check_roles"
+        ],
+        "permissions": {
+          "actions": "${var.custom_role_actions}",
+          "not_actions": []
+        },
+        "scope": "${data.azurerm_management_group.tenant_root_group.id}",
+        "name": "prisma-cloud-policy-${random_string.unique_id.result}",
+        "timeouts": {
+          "read": "5m",
+          "create": "5m"
+        },
+        "description": "Prisma Cloud custom role created via Terraform"
+      }
+    }
+  },
+  "variable": {
+    "tenant_id": {
+      "default": "${TENANT_ID}",
+      "type": "string"
+    },
+    "azure_portal_link": {
+      "default": "https://portal.azure.com/",
+      "type": "string"
+    },
+    "custom_role_actions": {
+      "default": [
+        "Microsoft.ContainerService/managedClusters/read",
+        "Microsoft.ContainerService/managedClusters/runcommand/action",
+        "Microsoft.ContainerService/managedclusters/commandResults/read"
+      ],
+      "type": "list"
+    },
+    "cloud_environment": {
+      "default": "public",
+      "type": "string"
+    },
+    "application_password_expiration": {
+      "default": "8760h",
+      "type": "string"
+    }
+  },
+  "terraform": {
+    "required_providers": {
+      "random": "=3.1.0",
+      "azuread": "=2.28.1",
+      "time": "=0.7.0",
+      "azurerm": "=3.24.0"
+    }
+  }
+}
