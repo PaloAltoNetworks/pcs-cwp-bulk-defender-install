@@ -1,0 +1,12 @@
+{
+    "consoleAddr":"us-east1.cloud.twistlock.com",
+    "namespace": "twistlock", 
+    "containerRuntime": "containerd",
+    "orchestration": "kubernetes",
+    "privileged": false, 
+    "serviceAccounts": true, 
+    "istio": false, 
+    "collectPodLabels": true, 
+    "proxy": null, 
+    "taskName": null
+}
