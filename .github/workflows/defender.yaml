@@ -20,4 +20,4 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                 name: daemonset
-                path: path/to/artifact/daemonset.yaml
+                path: daemonset.yaml
