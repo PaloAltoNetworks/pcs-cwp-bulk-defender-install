@@ -26,7 +26,6 @@ jobs:
 
                 #Turn SUBSCRIPTIONS environment variable into an array
                 IFS=',' read -r -a subscriptions <<< ${{ secrets.SUBSCRIPTIONS }}
-                skipped_clusters=()
 
                 #Verify if cluster has the defender installed in the subscriptions
                 for subscription in "${subscriptions[@]}"
@@ -41,7 +40,7 @@ jobs:
 
                         if [ $tag == "no" ]
                         then
-                            echo "Skipping cluster: ${cluster_name}. Tag '$SKIP_TAG' is set to 'no'."
+                            echo "Skipping cluster: ${cluster_name}. Tag '${{ secrets.SKIP_TAG }}' is set to 'no'."
                         else
                             echo "Accessing to cluster: ${cluster_name}"
                             response=$(az aks command invoke --resource-group ${resource_group} --name ${cluster_name}  --command "kubectl get ds twistlock-defender-ds -n twistlock" -o json | jq -r '.exitCode')
