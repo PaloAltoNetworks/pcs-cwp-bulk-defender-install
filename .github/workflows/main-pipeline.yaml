@@ -13,8 +13,8 @@ jobs:
     uses: ./.github/workflows/defender.yaml
     secrets: inherit 
 
-  deploy-azure:
+  azure:
     needs: defender 
-    name: deploy-azure
+    name: azure
     uses: ./.github/workflows/azure.yaml
     secrets: inherit
