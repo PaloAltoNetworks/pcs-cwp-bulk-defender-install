@@ -1,0 +1,20 @@
+name: 00 - Main CI / CD Pipeline
+
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+  workflow_dispatch:
+  
+jobs:
+  defender:
+    name: defender
+    uses: ./.github/workflows/defender.yaml
+    secrets: inherit 
+
+  deploy-azure:
+    needs: defender 
+    name: deploy-azure
+    uses: ./.github/workflows/deploy-azure.yaml
+    secrets: inherit

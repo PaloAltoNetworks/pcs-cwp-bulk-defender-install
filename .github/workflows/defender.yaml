@@ -1,0 +1,23 @@
+name: 10 Download Defender Pipeline
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+    defender:
+        environment: testing
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Check out the repository
+              uses: actions/checkout@v4
+            - name: Download the DaemonSet defender from PrismaCloud Compute Console
+              run: |
+                CONSOLE_TOKEN=$(curl -s -k ${{ secrets.COMPUTE_API_ENDPOINT }}/api/v1/authenticate -X POST -H "Content-Type: application/json" -d '{"username":"${{ secrets.PRISMA_USERNAME }}", "password":"${{ secrets.PRISMA_PASSWORD }}"}' | grep -Po '"'"token"'"\s*:\s*"\K([^"]*)')
+                curl -s -k -O ${{ secrets.COMPUTE_API_ENDPOINT }}/api/v1/defenders/daemonset.yaml -H 'Content-Type: application/json' -H "Authorization: Bearer $CONSOLE_TOKEN" -d @defenderConfig.json
+        
+            - name: Upload Defender Manifest
+              uses: actions/upload-artifact@v4
+              with:
+                name: daemonset
+                path: path/to/artifact/daemonset.yaml
