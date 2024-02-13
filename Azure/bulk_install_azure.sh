@@ -25,7 +25,6 @@ az login --service-principal -u ${AZURE_APP_ID} -p ${AZURE_APP_KEY} --tenant ${A
 
 #Turn SUBSCRIPTIONS environment variable into an array
 IFS=',' read -r -a subscriptions <<< "$SUBSCRIPTIONS"
-skipped_clusters=()
 
 #Verify if cluster has the defender installed in the subscriptions
 for subscription in "${subscriptions[@]}"
