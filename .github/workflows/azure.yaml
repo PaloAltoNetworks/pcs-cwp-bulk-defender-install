@@ -24,10 +24,18 @@ jobs:
                 #Login to azure with Service Principal and getting the Subscriptions it has access to
                 echo "Logging in into Azure"
                 subscriptions=( $(az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_APP_KEY }} --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r ".[] | .id") )
+                IFS=',' read -r -a excluded_subscriptions <<< "${{ secrets.EXCLUDED_SUBSCRIPTIONS }}"
 
                 #Verify if cluster has the defender installed in the subscriptions
                 for subscription in "${subscriptions[@]}"
                 do
+                    #Skipping subscriptions in the excluded list
+                    if [[ ${excluded_subscriptions[@]} =~ $subscription ]]
+                    then
+                        echo "Skipping Subscription ID $subscription"
+                        continue
+                    fi
+                    
                     az account set --subscription $subscription
                     echo "Reading AKS Clusters. Subscription ID: $subscription"
                     az aks list --only-show-errors | jq -c '.[]' | while read cluster

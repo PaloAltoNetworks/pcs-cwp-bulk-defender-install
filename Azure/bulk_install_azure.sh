@@ -6,6 +6,7 @@
 [[ -z "${AZURE_TENANT_ID}" ]] && AZURE_TENANT_ID="${AZURE_TENANT_ID}"
 [[ -z "${AZURE_APP_ID}" ]] && AZURE_APP_ID="${AZURE_APP_ID}"
 [[ -z "${AZURE_APP_KEY}" ]] && AZURE_APP_KEY="${AZURE_APP_KEY}"
+[[ -z "${EXCLUDED_SUBSCRIPTIONS}" ]] && EXCLUDED_SUBSCRIPTIONS="${EXCLUDED_SUBSCRIPTIONS}"
 [[ -z "${SKIP_TAG}" ]] && SKIP_TAG="${SKIP_TAG}"
 
 #Generate Console TOKEN
@@ -21,10 +22,18 @@ curl -s -k -O ${COMPUTE_API_ENDPOINT}/api/v1/defenders/daemonset.yaml -H 'Conten
 #Login to azure with Service Principal and getting the Subscriptions it has access to
 echo "Logging in into Azure"
 subscriptions=( $(az login --service-principal -u ${AZURE_APP_ID} -p ${AZURE_APP_KEY} --tenant ${AZURE_TENANT_ID} | jq -r ".[] | .id") )
+IFS=',' read -r -a excluded_subscriptions <<< "$EXCLUDED_SUBSCRIPTIONS"
 
 #Verify if cluster has the defender installed in the subscriptions
 for subscription in "${subscriptions[@]}"
 do
+    #Skipping subscriptions in the excluded list
+    if [[ ${excluded_subscriptions[@]} =~ $subscription ]]
+    then
+        echo "Skipping Subscription ID $subscription"
+        continue
+    fi
+    
     az account set --subscription $subscription
     echo "Reading AKS Clusters. Subscription ID: $subscription"
     az aks list --only-show-errors | jq -c '.[]' | while read cluster
