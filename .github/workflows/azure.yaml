@@ -21,11 +21,9 @@ jobs:
                 path: defender
             - name: Install defender
               run: |
+                #Login to azure with Service Principal and getting the Subscriptions it has access to
                 echo "Logging in into Azure"
-                az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_APP_KEY }} --tenant ${{ secrets.AZURE_TENANT_ID }} > /dev/null
-
-                #Turn SUBSCRIPTIONS environment variable into an array
-                IFS=',' read -r -a subscriptions <<< ${{ secrets.SUBSCRIPTIONS }}
+                subscriptions=( $(az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_APP_KEY }} --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r ".[] | .id") )
 
                 #Verify if cluster has the defender installed in the subscriptions
                 for subscription in "${subscriptions[@]}"

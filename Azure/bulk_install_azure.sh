@@ -6,7 +6,6 @@
 [[ -z "${AZURE_TENANT_ID}" ]] && AZURE_TENANT_ID="${AZURE_TENANT_ID}"
 [[ -z "${AZURE_APP_ID}" ]] && AZURE_APP_ID="${AZURE_APP_ID}"
 [[ -z "${AZURE_APP_KEY}" ]] && AZURE_APP_KEY="${AZURE_APP_KEY}"
-[[ -z "${SUBSCRIPTIONS}" ]] && SUBSCRIPTIONS="${SUBSCRIPTIONS}"
 [[ -z "${SKIP_TAG}" ]] && SKIP_TAG="${SKIP_TAG}"
 
 #Generate Console TOKEN
@@ -19,12 +18,9 @@ CONSOLE_TOKEN=$(curl -s -k ${COMPUTE_API_ENDPOINT}/api/v1/authenticate -X POST -
 echo "Downloading Prisma Cloud Defender"
 curl -s -k -O ${COMPUTE_API_ENDPOINT}/api/v1/defenders/daemonset.yaml -H 'Content-Type: application/json' -H "Authorization: Bearer $CONSOLE_TOKEN" -d @defenderConfig.json
 
-#Login to azure with Service Principal
+#Login to azure with Service Principal and getting the Subscriptions it has access to
 echo "Logging in into Azure"
-az login --service-principal -u ${AZURE_APP_ID} -p ${AZURE_APP_KEY} --tenant ${AZURE_TENANT_ID} > /dev/null
-
-#Turn SUBSCRIPTIONS environment variable into an array
-IFS=',' read -r -a subscriptions <<< "$SUBSCRIPTIONS"
+subscriptions=( $(az login --service-principal -u ${AZURE_APP_ID} -p ${AZURE_APP_KEY} --tenant ${AZURE_TENANT_ID} | jq -r ".[] | .id") )
 
 #Verify if cluster has the defender installed in the subscriptions
 for subscription in "${subscriptions[@]}"
