@@ -10,12 +10,12 @@ jobs:
         runs-on: ubuntu-latest
         steps: 
             - name: Check out the repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
             - name: Install Dependencies
               run: | 
                 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
             - name: Download Artifacts
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
               with:
                 name: daemonset
                 path: defender
